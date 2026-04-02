@@ -1,0 +1,55 @@
+{
+    "bulb": {
+        "titolo": "Bulbo di percussione",
+        "descrizione": "Convessità che appare sulla faccia ventrale della scheggia a ridosso del punto d'impatto.",
+        "colore": "#fec123"
+    },
+    "cortex": {
+        "titolo": "Cortice",
+        "descrizione": "Superficie esterna naturale, non lavorata e alterata dagli agenti atmosferici della materia prima, presente su schegge o nuclei.",
+        "colore": "#ef0722"
+    },
+    "hackle": {
+        "titolo": "Lancetta",
+        "descrizione": "Traccia di frattura radiale a forma di lancia, da cui la denominazione, che si diffonde dal punto di impatto sulla faccia ventrale durante il distacco della scheggia.",
+        "guida alla lettura": "Le lancette convergono sempre verso il punto d'impatto e permettono di identificare la direzione del débitage (scheggiatura) in assenza di onde di propagazione e quando mancano tallone e bulbo.",
+        "colore": "#e85106"
+    },
+    "scar": {
+        "titolo": "Negativo di distacco",
+        "descrizione": "Impronta lasciata sulla superficie di un nucleo o di una scheggia dopo che un frammento è stato rimosso.",
+        "colore": "#ed71c2"
+    },
+    "ripple": {
+        "titolo": "Onda di propagazione",
+        "descrizione": "Onde concentriche di lunghezza e ampiezza variabile, che si sviluppano a partire dal punto d'impatto, provocate dalla propagazione del colpo sulla faccia ventrale.",
+        "guida alla lettura": "In assenza della parte tallone-bulbo, esse indicano la direzione della scheggiatura.",
+        "colore": "#7c0229"
+    },
+    "impact_point": {
+        "titolo": "Punto d'impatto",
+        "descrizione": "Punto dove il colpo è stato applicato per fratturare la materia prima.",
+        "guida alla lettura": "Si osserva sul bordo del tallone adiacente alla faccia ventrale.",
+        "colore": "#9bd7db"
+    },
+    "retouch": {
+        "titolo": "Ritocco",
+        "descrizione": "Piccoli distacchi intenzionali situati lungo il bordo di un supporto, utilizzati per modellare o affilare lo strumento.",
+        "colore": "#176fd9"
+    },
+    "butt": {
+        "titolo": "Tallone",
+        "descrizione": "La porzione residua del piano di percussione del nucleo che si stacca con la scheggia.",
+        "colore": "#b53df4"
+    },
+    "ventral_surface": {
+        "titolo": "Faccia ventrale",
+        "descrizione": "La superficie inferiore della scheggia originatasi dal nucleo in seguito alla percussione.",
+        "colore": "#2c1c96"
+    },
+    "dorsal_surface": {
+        "titolo": "Faccia dorsale",
+        "descrizione": "La superficie superiore di una scheggia che tipicamente mostra i negativi dei distacchi precedenti e/o i resti del cortice naturale.",
+        "colore": "#15c528"
+    }
+}
