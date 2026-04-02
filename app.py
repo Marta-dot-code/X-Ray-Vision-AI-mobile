@@ -7,43 +7,44 @@ from PIL import Image
 import io
 
 app = Flask(__name__)
+# Permettiamo l'accesso da qualsiasi origine (fondamentale per Netlify)
 CORS(app)
 
-# Percorso assoluto della cartella corrente
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Caricamento file con percorsi sicuri
+# Caricamento database e modello
 try:
-    model_path = os.path.join(BASE_DIR, 'identificatore.pkl')
-    db_path = os.path.join(BASE_DIR, 'database_strumenti.json')
-    
-    model = joblib.load(model_path)
-    with open(db_path, 'r', encoding='utf-8') as f:
+    with open(os.path.join(BASE_DIR, 'database_strumenti.json'), 'r', encoding='utf-8') as f:
         database_metadati = json.load(f)
-    print("LOG: Caricamento completato con successo!")
+    model = joblib.load(os.path.join(BASE_DIR, 'identificatore.pkl'))
+    print("LOG: Tutto caricato!")
 except Exception as e:
-    print(f"LOG ERRORE: {e}")
+    print(f"ERRORE: {e}")
 
 @app.route('/')
 def home():
-    return "<h1>SERVER ATTIVO</h1>La rotta /identify è pronta."
+    return "SERVER IA ATTIVO. Prova a visitare /test per verifica."
+
+@app.route('/test')
+def test():
+    return "La rotta /identify e' pronta a ricevere POST."
 
 @app.route('/identify', methods=['POST'])
 def identify():
     try:
         if 'file' not in request.files:
-            return jsonify({"error": "Nessun file"}), 400
+            return jsonify({"error": "No file"}), 400
         
         file = request.files['file']
         img = Image.open(io.BytesIO(file.read())).convert('RGB')
 
-        # Simuliamo la predizione (sostituisci con la tua logica se diversa)
+        # Simulazione (qui andrà la tua logica)
         label_identificata = "reperto_01" 
 
         risultato = database_metadati.get(label_identificata)
         if risultato:
             return jsonify(risultato)
-        return jsonify({"error": "Non trovato"}), 404
+        return jsonify({"error": "Non trovato nel JSON"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
