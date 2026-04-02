@@ -7,43 +7,46 @@ from PIL import Image
 import io
 
 app = Flask(__name__)
-CORS(app) # Fondamentale per l'accesso da smartphone
+CORS(app)
 
-# 1. Carichiamo la "memoria" IA (.pkl)
-# Assicurati che il nome del file sia identico al tuo
-model = joblib.load('identificatore.pkl')
+# Percorso assoluto della cartella corrente
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 2. Carichiamo il database dei metadati
-with open('database_strumenti.json', 'r', encoding='utf-8') as f:
-    database_metadati = json.load(f)
+# Caricamento file con percorsi sicuri
+try:
+    model_path = os.path.join(BASE_DIR, 'identificatore.pkl')
+    db_path = os.path.join(BASE_DIR, 'database_strumenti.json')
+    
+    model = joblib.load(model_path)
+    with open(db_path, 'r', encoding='utf-8') as f:
+        database_metadati = json.load(f)
+    print("LOG: Caricamento completato con successo!")
+except Exception as e:
+    print(f"LOG ERRORE: {e}")
+
+@app.route('/')
+def home():
+    return "<h1>SERVER ATTIVO</h1>La rotta /identify è pronta."
 
 @app.route('/identify', methods=['POST'])
 def identify():
-    if 'file' not in request.files:
-        return jsonify({"error": "Nessun file inviato"}), 400
-    
-    file = request.files['file']
-    img_bytes = file.read()
-    img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "Nessun file"}), 400
+        
+        file = request.files['file']
+        img = Image.open(io.BytesIO(file.read())).convert('RGB')
 
-    # --- QUI VA LA TUA LOGICA DI PREDIZIONE ---
-    # Esempio generico (adattalo al tuo modello):
-    # prediction = model.predict(img) 
-    # label_identificata = prediction[0]
-    
-    # Per ora simuliamo che l'IA abbia trovato "reperto_01"
-    # Sostituisci questa riga con il risultato reale del tuo modello
-    label_identificata = "reperto_01" 
+        # Simuliamo la predizione (sostituisci con la tua logica se diversa)
+        label_identificata = "reperto_01" 
 
-    # 3. Cerchiamo i dati nel database e li inviamo al cellulare
-    risultato = database_metadati.get(label_identificata)
-    
-    if risultato:
-        return jsonify(risultato)
-    else:
-        return jsonify({"error": "Reperto non trovato nel database"}), 404
+        risultato = database_metadati.get(label_identificata)
+        if risultato:
+            return jsonify(risultato)
+        return jsonify({"error": "Non trovato"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Render assegna una porta dinamica, quindi usiamo os.environ
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
