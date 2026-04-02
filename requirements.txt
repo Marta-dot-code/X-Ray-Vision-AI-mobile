@@ -1,6 +1,6 @@
-flask
-flask-cors
-joblib
-pillow
-gunicorn
+fastapi
+uvicorn
+python-multipart
 sentence-transformers
+pillow
+torch --index-url https://download.pytorch.org/whl/cpu
