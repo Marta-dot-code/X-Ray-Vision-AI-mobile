@@ -1,53 +1,78 @@
 import os
-import json
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import joblib
-from PIL import Image
+import pickle
 import io
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sentence_transformers import SentenceTransformer, util
+from PIL import Image
 
-app = Flask(__name__)
-# Permettiamo l'accesso da qualsiasi origine (fondamentale per Netlify)
-CORS(app)
+app = FastAPI()
 
+# Permettiamo la comunicazione con Netlify
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Percorso sicuro per i file su Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PKL_PATH = os.path.join(BASE_DIR, 'database_museo.pkl')
 
-# Caricamento database e modello
+# 1. Carichiamo CLIP e il Database .pkl
+print("LOG: Caricamento CLIP (clip-ViT-B-32)...")
+model = SentenceTransformer('clip-ViT-B-32')
+
 try:
-    with open(os.path.join(BASE_DIR, 'database_strumenti.json'), 'r', encoding='utf-8') as f:
-        database_metadati = json.load(f)
-    model = joblib.load(os.path.join(BASE_DIR, 'identificatore.pkl'))
-    print("LOG: Tutto caricato!")
+    with open(PKL_PATH, 'rb') as f:
+        data = pickle.load(f)
+        db_embeddings = data['embeddings']
+        metadati_db = data['metadati']
+    print("LOG: Memoria .pkl caricata con successo!")
 except Exception as e:
-    print(f"ERRORE: {e}")
+    print(f"LOG ERRORE: Impossibile caricare .pkl: {e}")
 
-@app.route('/')
+@app.get("/")
 def home():
-    return "SERVER IA ATTIVO. Prova a visitare /test per verifica."
+    return {"status": "online", "message": "Server IA del Museo pronto"}
 
-@app.route('/test')
-def test():
-    return "La rotta /identify e' pronta a ricevere POST."
-
-@app.route('/identify', methods=['POST'])
-def identify():
+@app.post("/identify")
+async def identify_artifact(file: UploadFile = File(...)):
     try:
-        if 'file' not in request.files:
-            return jsonify({"error": "No file"}), 400
+        # 2. Leggiamo l'immagine
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
         
-        file = request.files['file']
-        img = Image.open(io.BytesIO(file.read())).convert('RGB')
+        # 3. Trasformiamo la foto in un vettore
+        query_embedding = model.encode(image)
+        
+        # 4. Confronto con il database
+        best_match_id = None
+        highest_score = -1
+        
+        for item in db_embeddings:
+            score = util.cos_sim(query_embedding, item['vettore']).item()
+            if score > highest_score:
+                highest_score = score
+                best_match_id = item['reperto_id']
+        
+        # SOGLIA DI SICUREZZA
+        if highest_score < 0.6:
+            return {"error": "Reperto non riconosciuto", "score": highest_score}
 
-        # Simulazione (qui andrà la tua logica)
-        label_identificata = "reperto_01" 
+        # 5. Restituiamo i metadati contenuti nel PKL
+        result = metadati_db[best_match_id]
+        result['id'] = best_match_id
+        result['score'] = highest_score
+        
+        print(f"LOG: Trovato {best_match_id} (Score: {highest_score:.2f})")
+        return result
 
-        risultato = database_metadati.get(label_identificata)
-        if risultato:
-            return jsonify(risultato)
-        return jsonify({"error": "Non trovato nel JSON"}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
